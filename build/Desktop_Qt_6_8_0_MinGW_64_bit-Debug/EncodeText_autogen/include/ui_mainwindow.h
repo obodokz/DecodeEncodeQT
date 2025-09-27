@@ -31,6 +31,7 @@ public:
     QPushButton *readButton;
     QPushButton *encodeButton;
     QPushButton *decodeButton;
+    QTextEdit *keyLineEdit;
     QTextEdit *textEdit;
     QMenuBar *menubar;
     QStatusBar *statusbar;
@@ -68,6 +69,11 @@ public:
 
 
         verticalLayout_2->addLayout(verticalLayout);
+
+        keyLineEdit = new QTextEdit(centralwidget);
+        keyLineEdit->setObjectName("keyLineEdit");
+
+        verticalLayout_2->addWidget(keyLineEdit);
 
         textEdit = new QTextEdit(centralwidget);
         textEdit->setObjectName("textEdit");

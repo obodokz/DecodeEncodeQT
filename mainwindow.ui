@@ -48,6 +48,9 @@
      </layout>
     </item>
     <item>
+     <widget class="QTextEdit" name="keyLineEdit"/>
+    </item>
+    <item>
      <widget class="QTextEdit" name="textEdit"/>
     </item>
    </layout>

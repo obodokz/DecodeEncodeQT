@@ -1,6 +1,7 @@
 #include "mainwindow.h"
 #include "./ui_mainwindow.h"
 #include <QFileDialog>
+#include <QMessageBox>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -89,13 +90,33 @@ void MainWindow::on_readButton_clicked()
 
 void MainWindow::on_encodeButton_clicked()
 {
+    const QString key = ui->keyLineEdit->toPlainText();
+    QString text = ui->textEdit->toPlainText();
 
+    if(key.isEmpty())
+    {
+        QMessageBox::warning(this, "Ключ пуст", "В ключе нет символов");
+        return;
+    }
+
+    const QString enc = vigenere(text, key, false);
+    ui->textEdit->setPlainText(enc);
 }
 
 
 void MainWindow::on_decodeButton_clicked()
 {
+    const QString key = ui->keyLineEdit->toPlainText();
+    QString text = ui->textEdit->toPlainText();
 
+    if(key.isEmpty())
+    {
+        QMessageBox::warning(this, "Ключ пуст", "В ключе нет символов");
+        return;
+    }
+
+    const QString enc = vigenere(text, key, true);
+    ui->textEdit->setPlainText(enc);
 }
 
 QChar MainWindow::shiftChar(QChar ch, int shift)
@@ -111,5 +132,105 @@ QChar MainWindow::shiftChar(QChar ch, int shift)
 
     if(RU_LOW.contains(ch))
         return shiftInAlphabet(RU_LOW, ch);
+
+    if(RU_UP.contains(ch))
+        return shiftInAlphabet(RU_UP, ch);
+
+    if(EN_LOW.contains(ch))
+        return shiftInAlphabet(EN_LOW, ch);
+
+    if(EN_UP.contains(ch))
+        return shiftInAlphabet(EN_UP, ch);
+
+    return ch;
 }
 
+
+QString MainWindow::vigenere(const QString &text, const QString &key, bool decrypt)
+{
+    QVector<int> keyRU, keyEN;
+
+    for (QChar kc:key)
+    {
+        if(kc.isNull())
+            continue;
+
+        int idx = RU_LOW.indexOf(kc);
+        if (idx >= 0)
+        {
+            keyRU.push_back(idx);
+            continue;
+        }
+        idx = RU_UP.indexOf(kc);
+        if (idx >= 0)
+        {
+            keyRU.push_back(idx);
+            continue;
+        }
+
+
+        idx = EN_LOW.indexOf(kc);
+        if (idx >= 0)
+        {
+            keyEN.push_back(idx);
+            continue;
+        }
+        idx = EN_UP.indexOf(kc);
+        if (idx >= 0)
+        {
+            keyEN.push_back(idx);
+            continue;
+        }
+    }
+
+    if(keyRU.isEmpty() && keyEN.empty())
+    {
+        QMessageBox::warning(this, "Ключ пуст", "В ключе нет символов");
+    }
+
+    QString out;
+    out.reserve(text.size());
+
+    int curRU{0};
+    int curEN{0};
+
+    for(QChar ch: text)
+    {
+        if (RU_LOW.contains(ch) || RU_UP.contains(ch))
+        {
+            if (keyRU.isEmpty())
+            {
+                out.append(ch);
+                continue;
+            }
+            int shift = keyRU[curRU % keyRU.size()];
+
+            if (decrypt)
+                shift = -shift;
+
+            out.append(shiftChar(ch, shift));
+            curRU++;
+        }
+
+        else if (EN_LOW.contains(ch) || EN_UP.contains(ch))
+        {
+            if (keyEN.isEmpty())
+            {
+                out.append(ch);
+                continue;
+            }
+            int shift = keyEN[curEN % keyEN.size()];
+
+            if (decrypt)
+                shift = -shift;
+
+            out.append(shiftChar(ch, shift));
+            curEN++;
+        }
+        else
+        {
+            out.append(ch);
+        }
+    }
+    return out;
+}
